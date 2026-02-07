@@ -71,12 +71,41 @@
     letter-spacing: -0.5px;
   }
 
+  .header-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
   .header-tagline {
     font-size: 13px;
     opacity: 0.85;
-    margin-top: 4px;
     font-weight: 400;
     letter-spacing: 0.2px;
+  }
+
+  .sync-indicator {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 8px;
+    opacity: 0.9;
+  }
+
+  .sync-indicator.syncing {
+    background: rgba(255,255,255,0.2);
+    color: white;
+  }
+
+  .sync-indicator.synced {
+    background: rgba(52, 211, 153, 0.3);
+    color: white;
+  }
+
+  .sync-indicator.error {
+    background: rgba(248, 113, 113, 0.3);
+    color: white;
   }
 
   .empty-state {
@@ -512,7 +541,10 @@
     <span class="header-icon">✨</span>
     <h1>Tidy</h1>
   </div>
-  <p class="header-tagline">Stay on top of your chores</p>
+  <div class="header-bottom">
+    <p class="header-tagline">Stay on top of your chores</p>
+    <span class="sync-indicator" id="sync-status"></span>
+  </div>
 </header>
 
 <div id="chore-list"></div>
@@ -562,8 +594,9 @@
   'use strict';
 
   const STORAGE_KEY = 'choreTracker';
+  const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwZrpDLIhh3y_Vti8xl_HKT0hDOAZ2phC3FXQicE_NOjFM0OI-lfOlvb8wSWXz2NDqo1Q/exec';
 
-  function loadChores() {
+  function loadChoresLocal() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
@@ -574,8 +607,48 @@
     }
   }
 
-  function saveChores(chores) {
+  function saveChoresLocal(chores) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ chores }));
+  }
+
+  function syncToCloud(chores) {
+    setSyncStatus('syncing');
+    fetch(SYNC_URL, {
+      method: 'POST',
+      body: JSON.stringify({ chores }),
+    })
+    .then(r => r.json())
+    .then(() => setSyncStatus('synced'))
+    .catch(() => setSyncStatus('error'));
+  }
+
+  function syncFromCloud() {
+    setSyncStatus('syncing');
+    return fetch(SYNC_URL)
+      .then(r => r.json())
+      .then(data => {
+        const cloudChores = data.chores || [];
+        if (cloudChores.length > 0) {
+          chores = cloudChores;
+          saveChoresLocal(chores);
+          render();
+        }
+        setSyncStatus('synced');
+      })
+      .catch(() => setSyncStatus('error'));
+  }
+
+  function saveChores(c) {
+    saveChoresLocal(c);
+    syncToCloud(c);
+  }
+
+  function setSyncStatus(status) {
+    const el = document.getElementById('sync-status');
+    el.className = 'sync-indicator ' + status;
+    if (status === 'syncing') el.textContent = 'Syncing...';
+    else if (status === 'synced') el.textContent = 'Synced';
+    else if (status === 'error') el.textContent = 'Offline';
   }
 
   function generateId() {
@@ -643,7 +716,7 @@
     return rounded + (rounded === 1 ? ' day' : ' days');
   }
 
-  let chores = loadChores();
+  let chores = loadChoresLocal();
   let editingId = null;
   let expandedId = null;
 
@@ -904,6 +977,7 @@
   });
 
   render();
+  syncFromCloud();
 })();
 </script>
 </body>
