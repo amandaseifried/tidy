@@ -352,12 +352,25 @@
     flex: 1;
   }
 
-  .freq-row select {
-    flex: 1.2;
+  .freq-row select, #chore-room-input {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23757575' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
     padding-right: 32px;
+  }
+
+  .freq-row select {
+    flex: 1.2;
+  }
+
+  .chore-room {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 2px;
   }
 
   .modal-actions {
@@ -434,6 +447,18 @@
     <div class="form-group">
       <label for="chore-name-input">Chore name</label>
       <input type="text" id="chore-name-input" placeholder="e.g. Vacuum living room" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="chore-room-input">Room</label>
+      <select id="chore-room-input">
+        <option value="">Select a room</option>
+        <option value="Bedroom">Bedroom</option>
+        <option value="Bathroom">Bathroom</option>
+        <option value="Living Room">Living Room</option>
+        <option value="Kitchen">Kitchen</option>
+        <option value="Patio">Patio</option>
+        <option value="Other">Other</option>
+      </select>
     </div>
     <div class="form-group">
       <label>Expected frequency</label>
@@ -554,6 +579,7 @@
   const nameInput = document.getElementById('chore-name-input');
   const freqNumber = document.getElementById('freq-number');
   const freqUnit = document.getElementById('freq-unit');
+  const roomInput = document.getElementById('chore-room-input');
   const btnCancel = document.getElementById('btn-cancel');
   const btnSave = document.getElementById('btn-save');
 
@@ -606,6 +632,7 @@
             '<button class="detail-btn delete" data-action="delete-chore" data-id="' + chore.id + '">Delete</button>' +
           '</div>' +
           '<div class="detail-stats">' +
+            (chore.room ? '<p>Room: <strong>' + escapeHtml(chore.room) + '</strong></p>' : '') +
             '<p>Expected: <strong>' + freq + '</strong></p>' +
             (avg ? '<p>Average interval: <strong>' + avg + '</strong></p>' : '') +
             '<p>Completions: <strong>' + completions.length + '</strong></p>' +
@@ -624,6 +651,7 @@
               (isOverdue ? '<span class="overdue">overdue</span> &middot; ' : '') +
               'Last: ' + lastDone + ' &middot; ' + freq +
             '</div>' +
+            (chore.room ? '<span class="chore-room">' + escapeHtml(chore.room) + '</span>' : '') +
           '</div>' +
           '<button class="done-btn" data-done-id="' + chore.id + '">Done</button>' +
         '</div>' +
@@ -703,6 +731,7 @@
   // Modal save
   btnSave.addEventListener('click', function() {
     const name = nameInput.value.trim();
+    const room = roomInput.value;
     const num = parseInt(freqNumber.value, 10);
     const unitDays = parseInt(freqUnit.value, 10);
     if (!name || !num || num < 1) return;
@@ -713,12 +742,14 @@
       const chore = chores.find(c => c.id === editingId);
       if (chore) {
         chore.name = name;
+        chore.room = room;
         chore.intervalDays = intervalDays;
       }
     } else {
       chores.push({
         id: generateId(),
         name: name,
+        room: room,
         intervalDays: intervalDays,
         completions: [],
         createdAt: new Date().toISOString()
@@ -765,6 +796,7 @@
     editingId = null;
     modalTitleEl.textContent = 'Add Chore';
     nameInput.value = '';
+    roomInput.value = '';
     freqNumber.value = '1';
     freqUnit.value = '7';
     btnSave.disabled = true;
@@ -779,6 +811,7 @@
     editingId = id;
     modalTitleEl.textContent = 'Edit Chore';
     nameInput.value = chore.name;
+    roomInput.value = chore.room || '';
     btnSave.disabled = false;
     btnSave.textContent = 'Save';
 
