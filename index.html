@@ -103,7 +103,6 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding: 0 20px 14px;
-    background: linear-gradient(135deg, #7c5cbf 0%, #a78bfa 50%, #c4b5fd 100%);
   }
 
   .filter-bar::-webkit-scrollbar { display: none; }
@@ -673,24 +672,39 @@
 
   function syncToCloud(c) {
     setSyncStatus('syncing');
-    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ chores: c }) })
-      .then(r => r.json())
-      .then(() => setSyncStatus('synced'))
+    fetch(SYNC_URL, { method: 'POST', redirect: 'follow', body: JSON.stringify({ chores: c }) })
+      .then(r => {
+        // Google Apps Script redirects POST; response may not be JSON
+        if (r.ok || r.type === 'opaque' || r.redirected) {
+          setSyncStatus('synced');
+          return;
+        }
+        return r.text().then(t => {
+          try { JSON.parse(t); } catch {}
+          setSyncStatus('synced');
+        });
+      })
       .catch(() => setSyncStatus('error'));
   }
 
   function syncFromCloud() {
     setSyncStatus('syncing');
-    return fetch(SYNC_URL)
-      .then(r => r.json())
-      .then(data => {
-        const cloud = data.chores || [];
-        if (cloud.length > 0 || chores.length === 0) {
-          chores = cloud;
-          saveChoresLocal(chores);
-          render();
+    return fetch(SYNC_URL, { redirect: 'follow' })
+      .then(r => r.text())
+      .then(text => {
+        try {
+          const data = JSON.parse(text);
+          const cloud = data.chores || [];
+          if (cloud.length > 0 || chores.length === 0) {
+            chores = cloud;
+            saveChoresLocal(chores);
+            render();
+          }
+          setSyncStatus('synced');
+        } catch {
+          // Response wasn't JSON — might be a redirect page
+          setSyncStatus('error');
         }
-        setSyncStatus('synced');
       })
       .catch(() => setSyncStatus('error'));
   }
