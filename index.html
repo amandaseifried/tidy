@@ -7,7 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#7c5cbf">
 <title>Tidy</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧹</text></svg>">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -49,7 +51,7 @@
     top: 0;
     z-index: 10;
     background: linear-gradient(135deg, #7c5cbf 0%, #a78bfa 50%, #c4b5fd 100%);
-    padding: 20px 20px 18px;
+    padding: 20px 20px 0;
     padding-top: calc(20px + env(safe-area-inset-top, 0px));
     color: white;
   }
@@ -58,11 +60,6 @@
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-
-  .header-icon {
-    font-size: 26px;
-    line-height: 1;
   }
 
   header h1 {
@@ -76,6 +73,7 @@
     align-items: center;
     justify-content: space-between;
     margin-top: 4px;
+    padding-bottom: 12px;
   }
 
   .header-tagline {
@@ -93,19 +91,119 @@
     opacity: 0.9;
   }
 
-  .sync-indicator.syncing {
-    background: rgba(255,255,255,0.2);
-    color: white;
+  .sync-indicator.syncing { background: rgba(255,255,255,0.2); color: white; }
+  .sync-indicator.synced { background: rgba(52, 211, 153, 0.3); color: white; }
+  .sync-indicator.error { background: rgba(248, 113, 113, 0.3); color: white; }
+
+  /* Filter tabs */
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 20px 14px;
+    background: linear-gradient(135deg, #7c5cbf 0%, #a78bfa 50%, #c4b5fd 100%);
   }
 
-  .sync-indicator.synced {
-    background: rgba(52, 211, 153, 0.3);
-    color: white;
+  .filter-bar::-webkit-scrollbar { display: none; }
+
+  .filter-tab {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1.5px solid rgba(255,255,255,0.35);
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+    min-height: 34px;
   }
 
-  .sync-indicator.error {
-    background: rgba(248, 113, 113, 0.3);
-    color: white;
+  .filter-tab.active {
+    background: white;
+    color: var(--accent);
+    border-color: white;
+  }
+
+  /* Summary + controls bar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-text span {
+    font-weight: 600;
+  }
+
+  .summary-text .s-red { color: var(--red-dark); }
+  .summary-text .s-yellow { color: #b45309; }
+  .summary-text .s-green { color: var(--green-dark); }
+
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-family: inherit;
+    font-weight: 500;
+    min-height: 32px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg);
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .stat-chip strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* Room group header */
+  .room-header {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    padding: 16px 16px 6px;
+  }
+
+  .room-header:first-child {
+    padding-top: 4px;
   }
 
   .empty-state {
@@ -157,26 +255,20 @@
     min-height: 68px;
   }
 
-  .chore-row:active {
-    background: #f5f3fa;
-  }
+  .chore-row:active { background: #f5f3fa; }
 
   .status-dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 0 3px var(--bg);
   }
 
   .status-dot.green { background: var(--green); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15); }
   .status-dot.yellow { background: var(--yellow); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15); }
   .status-dot.red { background: var(--red); box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15); }
 
-  .chore-info {
-    flex: 1;
-    min-width: 0;
-  }
+  .chore-info { flex: 1; min-width: 0; }
 
   .chore-name {
     font-size: 15px;
@@ -194,10 +286,7 @@
     font-weight: 400;
   }
 
-  .chore-meta .overdue {
-    color: var(--red-dark);
-    font-weight: 600;
-  }
+  .chore-meta .overdue { color: var(--red-dark); font-weight: 600; }
 
   .chore-room {
     font-size: 11px;
@@ -229,14 +318,8 @@
     box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
   }
 
-  .done-btn:active {
-    transform: scale(0.92);
-    opacity: 0.85;
-  }
-
-  .done-btn.flash {
-    animation: flash-done 0.4s ease;
-  }
+  .done-btn:active { transform: scale(0.92); opacity: 0.85; }
+  .done-btn.flash { animation: flash-done 0.4s ease; }
 
   @keyframes flash-done {
     0% { transform: scale(1); }
@@ -244,7 +327,6 @@
     100% { transform: scale(1); }
   }
 
-  /* Expanded detail section */
   .chore-detail {
     display: none;
     border-top: 1px solid var(--border);
@@ -252,15 +334,9 @@
     background: #fbfaff;
   }
 
-  .chore-detail.open {
-    display: block;
-  }
+  .chore-detail.open { display: block; }
 
-  .detail-actions {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
+  .detail-actions { display: flex; gap: 8px; margin-bottom: 16px; }
 
   .detail-btn {
     background: none;
@@ -275,25 +351,11 @@
     color: var(--text);
   }
 
-  .detail-btn.delete {
-    color: var(--red-dark);
-    border-color: var(--red);
-  }
+  .detail-btn.delete { color: var(--red-dark); border-color: var(--red); }
 
-  .detail-stats {
-    margin-bottom: 12px;
-  }
-
-  .detail-stats p {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-  }
-
-  .detail-stats strong {
-    color: var(--text);
-    font-weight: 600;
-  }
+  .detail-stats { margin-bottom: 12px; }
+  .detail-stats p { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+  .detail-stats strong { color: var(--text); font-weight: 600; }
 
   .history-title {
     font-size: 13px;
@@ -304,9 +366,7 @@
     color: var(--text-secondary);
   }
 
-  .history-list {
-    list-style: none;
-  }
+  .history-list { list-style: none; }
 
   .history-item {
     display: flex;
@@ -317,9 +377,7 @@
     font-size: 13px;
   }
 
-  .history-item:last-child {
-    border-bottom: none;
-  }
+  .history-item:last-child { border-bottom: none; }
 
   .history-delete {
     background: none;
@@ -336,11 +394,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .no-history {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-style: italic;
-  }
+  .no-history { font-size: 13px; color: var(--text-secondary); font-style: italic; }
 
   /* FAB */
   .fab {
@@ -365,9 +419,50 @@
     transition: transform 0.15s, box-shadow 0.15s;
   }
 
-  .fab:active {
-    transform: scale(0.9);
-    box-shadow: 0 2px 8px var(--accent-glow);
+  .fab:active { transform: scale(0.9); box-shadow: 0 2px 8px var(--accent-glow); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: calc(90px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    font-family: inherit;
+  }
+
+  .toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  .toast-undo {
+    background: none;
+    border: none;
+    color: var(--accent-light);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 8px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Modal overlay */
@@ -383,9 +478,7 @@
     justify-content: center;
   }
 
-  .modal-overlay.open {
-    display: flex;
-  }
+  .modal-overlay.open { display: flex; }
 
   .modal {
     background: var(--card);
@@ -402,16 +495,9 @@
     to { transform: translateY(0); }
   }
 
-  .modal h2 {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 24px;
-    color: var(--text);
-  }
+  .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text); }
 
-  .form-group {
-    margin-bottom: 18px;
-  }
+  .form-group { margin-bottom: 18px; }
 
   .form-group label {
     display: block;
@@ -444,14 +530,8 @@
     box-shadow: 0 0 0 3px var(--accent-glow);
   }
 
-  .freq-row {
-    display: flex;
-    gap: 10px;
-  }
-
-  .freq-row input {
-    flex: 1;
-  }
+  .freq-row { display: flex; gap: 10px; }
+  .freq-row input { flex: 1; }
 
   .freq-row select, #chore-room-input {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
@@ -460,15 +540,9 @@
     padding-right: 32px;
   }
 
-  .freq-row select {
-    flex: 1.2;
-  }
+  .freq-row select { flex: 1.2; }
 
-  .modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 28px;
-  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 28px; }
 
   .modal-actions button {
     flex: 1;
@@ -484,9 +558,7 @@
     transition: transform 0.1s;
   }
 
-  .modal-actions button:active {
-    transform: scale(0.97);
-  }
+  .modal-actions button:active { transform: scale(0.97); }
 
   .btn-cancel {
     background: var(--bg);
@@ -500,37 +572,15 @@
     box-shadow: 0 2px 10px var(--accent-glow);
   }
 
-  .btn-save:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
+  .btn-save:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 
-  /* Desktop tweaks */
   @media (min-width: 600px) {
-    #chore-list {
-      max-width: 540px;
-      margin: 0 auto;
-      padding: 16px;
-      padding-bottom: 100px;
-    }
-
-    .header-inner {
-      justify-content: center;
-    }
-
-    .header-tagline {
-      text-align: center;
-    }
-
-    .modal {
-      border-radius: 20px;
-      margin-bottom: 40px;
-    }
-
-    .modal-overlay {
-      align-items: center;
-    }
+    #chore-list { max-width: 540px; margin: 0 auto; padding: 16px; padding-bottom: 100px; }
+    .header-inner { justify-content: center; }
+    .header-tagline { text-align: center; }
+    .toolbar, .stats-bar, .filter-bar { max-width: 564px; margin-left: auto; margin-right: auto; }
+    .modal { border-radius: 20px; margin-bottom: 40px; }
+    .modal-overlay { align-items: center; }
   }
 </style>
 </head>
@@ -544,11 +594,23 @@
     <p class="header-tagline">Outer order, inner calm</p>
     <span class="sync-indicator" id="sync-status"></span>
   </div>
+  <div class="filter-bar" id="filter-bar"></div>
 </header>
+
+<div class="stats-bar" id="stats-bar"></div>
+<div class="toolbar" id="toolbar">
+  <span class="summary-text" id="summary-text"></span>
+  <button class="view-toggle" id="view-toggle">By urgency</button>
+</div>
 
 <div id="chore-list"></div>
 
 <button class="fab" id="fab-add" aria-label="Add chore">+</button>
+
+<div class="toast" id="toast">
+  <span id="toast-message"></span>
+  <button class="toast-undo" id="toast-undo">Undo</button>
+</div>
 
 <!-- Add/Edit Modal -->
 <div class="modal-overlay" id="modal-overlay">
@@ -594,31 +656,27 @@
 
   const STORAGE_KEY = 'choreTracker';
   const SYNC_URL = 'https://script.google.com/macros/s/AKfycbwZrpDLIhh3y_Vti8xl_HKT0hDOAZ2phC3FXQicE_NOjFM0OI-lfOlvb8wSWXz2NDqo1Q/exec';
+  const ROOMS = ['Bedroom', 'Bathroom', 'Living Room', 'Kitchen', 'Patio', 'Other'];
 
+  // --- Data layer ---
   function loadChoresLocal() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
-      const data = JSON.parse(raw);
-      return data.chores || [];
-    } catch {
-      return [];
-    }
+      return JSON.parse(raw).chores || [];
+    } catch { return []; }
   }
 
-  function saveChoresLocal(chores) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ chores }));
+  function saveChoresLocal(c) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ chores: c }));
   }
 
-  function syncToCloud(chores) {
+  function syncToCloud(c) {
     setSyncStatus('syncing');
-    fetch(SYNC_URL, {
-      method: 'POST',
-      body: JSON.stringify({ chores }),
-    })
-    .then(r => r.json())
-    .then(() => setSyncStatus('synced'))
-    .catch(() => setSyncStatus('error'));
+    fetch(SYNC_URL, { method: 'POST', body: JSON.stringify({ chores: c }) })
+      .then(r => r.json())
+      .then(() => setSyncStatus('synced'))
+      .catch(() => setSyncStatus('error'));
   }
 
   function syncFromCloud() {
@@ -626,9 +684,9 @@
     return fetch(SYNC_URL)
       .then(r => r.json())
       .then(data => {
-        const cloudChores = data.chores || [];
-        if (cloudChores.length > 0) {
-          chores = cloudChores;
+        const cloud = data.chores || [];
+        if (cloud.length > 0 || chores.length === 0) {
+          chores = cloud;
           saveChoresLocal(chores);
           render();
         }
@@ -645,15 +703,14 @@
   function setSyncStatus(status) {
     const el = document.getElementById('sync-status');
     el.className = 'sync-indicator ' + status;
-    if (status === 'syncing') el.textContent = 'Syncing...';
-    else if (status === 'synced') el.textContent = 'Synced';
-    else if (status === 'error') el.textContent = 'Offline';
+    el.textContent = status === 'syncing' ? 'Syncing...' : status === 'synced' ? 'Synced' : 'Offline';
   }
 
   function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
+  // --- Time helpers ---
   function timeAgo(dateStr) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -688,8 +745,7 @@
   function overdueRatio(chore) {
     if (!chore.completions || chore.completions.length === 0) return Infinity;
     const last = new Date(chore.completions[0]).getTime();
-    const elapsed = Date.now() - last;
-    return elapsed / (chore.intervalDays * 86400000);
+    return (Date.now() - last) / (chore.intervalDays * 86400000);
   }
 
   function statusColor(ratio) {
@@ -702,9 +758,7 @@
     if (completions.length < 2) return null;
     const sorted = completions.map(c => new Date(c).getTime()).sort((a, b) => b - a);
     let total = 0;
-    for (let i = 0; i < sorted.length - 1; i++) {
-      total += sorted[i] - sorted[i + 1];
-    }
+    for (let i = 0; i < sorted.length - 1; i++) total += sorted[i] - sorted[i + 1];
     const avgMs = total / (sorted.length - 1);
     const days = avgMs / 86400000;
     if (days < 1) {
@@ -715,10 +769,63 @@
     return rounded + (rounded === 1 ? ' day' : ' days');
   }
 
+  // --- Stats ---
+  function calcStats() {
+    const now = Date.now();
+    const weekAgo = now - 7 * 86400000;
+    let weekCount = 0;
+    let hasActivityToday = false;
+
+    chores.forEach(ch => {
+      (ch.completions || []).forEach(c => {
+        const t = new Date(c).getTime();
+        if (t >= weekAgo) weekCount++;
+        const d = new Date(c);
+        const today = new Date();
+        if (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
+          hasActivityToday = true;
+        }
+      });
+    });
+
+    // Streak: count consecutive days with at least one completion
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    // Collect all unique completion dates
+    const allDates = new Set();
+    chores.forEach(ch => {
+      (ch.completions || []).forEach(c => {
+        const d = new Date(c);
+        d.setHours(0,0,0,0);
+        allDates.add(d.getTime());
+      });
+    });
+
+    let checkDate = new Date(today);
+    // If nothing done today, start checking from yesterday
+    if (!allDates.has(checkDate.getTime())) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    while (allDates.has(checkDate.getTime())) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    return { weekCount, streak };
+  }
+
+  // --- State ---
   let chores = loadChoresLocal();
   let editingId = null;
   let expandedId = null;
+  let activeFilter = 'All';
+  let groupByRoom = false;
+  let undoTimer = null;
+  let undoData = null;
 
+  // --- DOM refs ---
   const listEl = document.getElementById('chore-list');
   const fabEl = document.getElementById('fab-add');
   const overlayEl = document.getElementById('modal-overlay');
@@ -729,9 +836,83 @@
   const roomInput = document.getElementById('chore-room-input');
   const btnCancel = document.getElementById('btn-cancel');
   const btnSave = document.getElementById('btn-save');
+  const filterBar = document.getElementById('filter-bar');
+  const summaryEl = document.getElementById('summary-text');
+  const statsBarEl = document.getElementById('stats-bar');
+  const viewToggle = document.getElementById('view-toggle');
+  const toastEl = document.getElementById('toast');
+  const toastMsg = document.getElementById('toast-message');
+  const toastUndo = document.getElementById('toast-undo');
 
+  // --- Filter tabs ---
+  function renderFilters() {
+    const usedRooms = new Set(chores.map(c => c.room).filter(Boolean));
+    const tabs = ['All'].concat(ROOMS.filter(r => usedRooms.has(r)));
+    // Also include rooms with no chores if "All" has no chores, but keep it simple
+    filterBar.innerHTML = tabs.map(t =>
+      '<button class="filter-tab' + (activeFilter === t ? ' active' : '') + '" data-filter="' + t + '">' + t + '</button>'
+    ).join('');
+  }
+
+  filterBar.addEventListener('click', function(e) {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
+    activeFilter = tab.dataset.filter;
+    render();
+  });
+
+  // --- View toggle ---
+  viewToggle.addEventListener('click', function() {
+    groupByRoom = !groupByRoom;
+    viewToggle.textContent = groupByRoom ? 'By room' : 'By urgency';
+    render();
+  });
+
+  // --- Render ---
   function render() {
-    const sorted = [...chores].sort((a, b) => {
+    renderFilters();
+
+    let filtered = chores;
+    if (activeFilter !== 'All') {
+      filtered = chores.filter(c => c.room === activeFilter);
+    }
+
+    // Summary
+    let overdue = 0, dueSoon = 0, onTrack = 0;
+    filtered.forEach(c => {
+      const r = overdueRatio(c);
+      if (r === Infinity || r > 1.0) overdue++;
+      else if (r >= 0.7) dueSoon++;
+      else onTrack++;
+    });
+
+    const parts = [];
+    if (overdue > 0) parts.push('<span class="s-red">' + overdue + ' overdue</span>');
+    if (dueSoon > 0) parts.push('<span class="s-yellow">' + dueSoon + ' due soon</span>');
+    if (onTrack > 0) parts.push('<span class="s-green">' + onTrack + ' on track</span>');
+    summaryEl.innerHTML = parts.join(' &middot; ') || 'No chores';
+
+    // Stats
+    const stats = calcStats();
+    let statsHtml = '';
+    if (chores.length > 0) {
+      statsHtml += '<div class="stat-chip">This week: <strong>' + stats.weekCount + '</strong></div>';
+      if (stats.streak > 0) {
+        statsHtml += '<div class="stat-chip">Streak: <strong>' + stats.streak + ' day' + (stats.streak !== 1 ? 's' : '') + '</strong></div>';
+      }
+    }
+    statsBarEl.innerHTML = statsHtml;
+
+    if (filtered.length === 0) {
+      if (chores.length === 0) {
+        listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🧹</div><p>No chores yet</p><p class="hint">Tap + to add your first chore</p></div>';
+      } else {
+        listEl.innerHTML = '<div class="empty-state"><p>No chores in ' + escapeHtml(activeFilter) + '</p></div>';
+      }
+      return;
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
       const ra = overdueRatio(a);
       const rb = overdueRatio(b);
       if (ra === rb) return a.name.localeCompare(b.name);
@@ -740,70 +921,92 @@
       return rb - ra;
     });
 
-    if (sorted.length === 0) {
-      listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🧹</div><p>No chores yet</p><p class="hint">Tap + to add your first chore</p></div>';
-      return;
+    if (groupByRoom) {
+      // Group by room
+      const groups = {};
+      sorted.forEach(chore => {
+        const room = chore.room || 'Unassigned';
+        if (!groups[room]) groups[room] = [];
+        groups[room].push(chore);
+      });
+      // Order rooms: put rooms with overdue chores first
+      const roomOrder = Object.keys(groups).sort((a, b) => {
+        const aMax = Math.max(...groups[a].map(overdueRatio));
+        const bMax = Math.max(...groups[b].map(overdueRatio));
+        if (aMax === Infinity && bMax !== Infinity) return -1;
+        if (bMax === Infinity && aMax !== Infinity) return 1;
+        return bMax - aMax;
+      });
+      let html = '';
+      roomOrder.forEach(room => {
+        html += '<div class="room-header">' + escapeHtml(room) + '</div>';
+        groups[room].forEach(chore => { html += renderChoreCard(chore); });
+      });
+      listEl.innerHTML = html;
+    } else {
+      listEl.innerHTML = sorted.map(renderChoreCard).join('');
     }
+  }
 
-    listEl.innerHTML = sorted.map(chore => {
-      const ratio = overdueRatio(chore);
-      const color = statusColor(ratio);
-      const lastDone = chore.completions && chore.completions.length > 0
-        ? timeAgo(chore.completions[0])
-        : 'never';
-      const freq = frequencyLabel(chore.intervalDays);
-      const isOverdue = ratio > 1.0;
-      const isExpanded = expandedId === chore.id;
+  function renderChoreCard(chore) {
+    const ratio = overdueRatio(chore);
+    const color = statusColor(ratio);
+    const lastDone = chore.completions && chore.completions.length > 0
+      ? timeAgo(chore.completions[0]) : 'never';
+    const freq = frequencyLabel(chore.intervalDays);
+    const isOverdue = ratio > 1.0;
+    const isExpanded = expandedId === chore.id;
 
-      let detailHtml = '';
-      if (isExpanded) {
-        const avg = averageInterval(chore.completions || []);
-        const completions = chore.completions || [];
+    let detailHtml = '';
+    if (isExpanded) {
+      const avg = averageInterval(chore.completions || []);
+      const completions = chore.completions || [];
 
-        let historyHtml = '';
-        if (completions.length === 0) {
-          historyHtml = '<p class="no-history">No completions recorded</p>';
-        } else {
-          historyHtml = '<ul class="history-list">' + completions.map((c, i) =>
-            '<li class="history-item">' +
-              '<span>' + formatDate(c) + ' (' + timeAgo(c) + ')</span>' +
-              '<button class="history-delete" data-chore-id="' + chore.id + '" data-index="' + i + '" aria-label="Delete entry">&times;</button>' +
-            '</li>'
-          ).join('') + '</ul>';
-        }
-
-        detailHtml = '<div class="chore-detail open">' +
-          '<div class="detail-actions">' +
-            '<button class="detail-btn" data-action="edit" data-id="' + chore.id + '">Edit</button>' +
-            '<button class="detail-btn delete" data-action="delete-chore" data-id="' + chore.id + '">Delete</button>' +
-          '</div>' +
-          '<div class="detail-stats">' +
-            (chore.room ? '<p>Room: <strong>' + escapeHtml(chore.room) + '</strong></p>' : '') +
-            '<p>Expected: <strong>' + freq + '</strong></p>' +
-            (avg ? '<p>Average interval: <strong>' + avg + '</strong></p>' : '') +
-            '<p>Completions: <strong>' + completions.length + '</strong></p>' +
-          '</div>' +
-          '<p class="history-title">History</p>' +
-          historyHtml +
-        '</div>';
+      let historyHtml = '';
+      if (completions.length === 0) {
+        historyHtml = '<p class="no-history">No completions recorded</p>';
+      } else {
+        historyHtml = '<ul class="history-list">' + completions.map((c, i) =>
+          '<li class="history-item">' +
+            '<span>' + formatDate(c) + ' (' + timeAgo(c) + ')</span>' +
+            '<button class="history-delete" data-chore-id="' + chore.id + '" data-index="' + i + '" aria-label="Delete entry">&times;</button>' +
+          '</li>'
+        ).join('') + '</ul>';
       }
 
-      return '<div class="chore-card" data-id="' + chore.id + '">' +
-        '<div class="chore-row" data-id="' + chore.id + '">' +
-          '<div class="status-dot ' + color + '"></div>' +
-          '<div class="chore-info">' +
-            '<div class="chore-name">' + escapeHtml(chore.name) + '</div>' +
-            '<div class="chore-meta">' +
-              (isOverdue ? '<span class="overdue">overdue</span> &middot; ' : '') +
-              'Last: ' + lastDone + ' &middot; ' + freq +
-            '</div>' +
-            (chore.room ? '<span class="chore-room">' + escapeHtml(chore.room) + '</span>' : '') +
-          '</div>' +
-          '<button class="done-btn" data-done-id="' + chore.id + '">Done</button>' +
+      detailHtml = '<div class="chore-detail open">' +
+        '<div class="detail-actions">' +
+          '<button class="detail-btn" data-action="edit" data-id="' + chore.id + '">Edit</button>' +
+          '<button class="detail-btn delete" data-action="delete-chore" data-id="' + chore.id + '">Delete</button>' +
         '</div>' +
-        detailHtml +
+        '<div class="detail-stats">' +
+          (chore.room ? '<p>Room: <strong>' + escapeHtml(chore.room) + '</strong></p>' : '') +
+          '<p>Expected: <strong>' + freq + '</strong></p>' +
+          (avg ? '<p>Average interval: <strong>' + avg + '</strong></p>' : '') +
+          '<p>Completions: <strong>' + completions.length + '</strong></p>' +
+        '</div>' +
+        '<p class="history-title">History</p>' +
+        historyHtml +
       '</div>';
-    }).join('');
+    }
+
+    const showRoom = !groupByRoom && chore.room;
+
+    return '<div class="chore-card" data-id="' + chore.id + '">' +
+      '<div class="chore-row" data-id="' + chore.id + '">' +
+        '<div class="status-dot ' + color + '"></div>' +
+        '<div class="chore-info">' +
+          '<div class="chore-name">' + escapeHtml(chore.name) + '</div>' +
+          '<div class="chore-meta">' +
+            (isOverdue ? '<span class="overdue">overdue</span> &middot; ' : '') +
+            'Last: ' + lastDone + ' &middot; ' + freq +
+          '</div>' +
+          (showRoom ? '<span class="chore-room">' + escapeHtml(chore.room) + '</span>' : '') +
+        '</div>' +
+        '<button class="done-btn" data-done-id="' + chore.id + '">Done</button>' +
+      '</div>' +
+      detailHtml +
+    '</div>';
   }
 
   function escapeHtml(str) {
@@ -812,6 +1015,27 @@
     return div.innerHTML;
   }
 
+  // --- Toast ---
+  function showToast(message, onUndo) {
+    if (undoTimer) clearTimeout(undoTimer);
+    toastMsg.textContent = message;
+    undoData = onUndo;
+    toastEl.classList.add('visible');
+    undoTimer = setTimeout(hideToast, 4000);
+  }
+
+  function hideToast() {
+    toastEl.classList.remove('visible');
+    undoData = null;
+    if (undoTimer) { clearTimeout(undoTimer); undoTimer = null; }
+  }
+
+  toastUndo.addEventListener('click', function() {
+    if (undoData) undoData();
+    hideToast();
+  });
+
+  // --- Event handlers ---
   listEl.addEventListener('click', function(e) {
     const doneBtn = e.target.closest('[data-done-id]');
     if (doneBtn) {
@@ -827,43 +1051,30 @@
     const histDel = e.target.closest('.history-delete');
     if (histDel) {
       e.stopPropagation();
-      const choreId = histDel.dataset.choreId;
-      const index = parseInt(histDel.dataset.index, 10);
-      deleteCompletion(choreId, index);
+      deleteCompletion(histDel.dataset.choreId, parseInt(histDel.dataset.index, 10));
       return;
     }
 
     const actionBtn = e.target.closest('[data-action]');
     if (actionBtn) {
       e.stopPropagation();
-      const action = actionBtn.dataset.action;
-      const id = actionBtn.dataset.id;
-      if (action === 'edit') {
-        openEditModal(id);
-      } else if (action === 'delete-chore') {
-        if (confirm('Delete this chore?')) {
-          deleteChore(id);
-        }
+      if (actionBtn.dataset.action === 'edit') openEditModal(actionBtn.dataset.id);
+      else if (actionBtn.dataset.action === 'delete-chore') {
+        if (confirm('Delete this chore?')) deleteChore(actionBtn.dataset.id);
       }
       return;
     }
 
     const row = e.target.closest('.chore-row');
     if (row) {
-      const id = row.dataset.id;
-      expandedId = expandedId === id ? null : id;
+      expandedId = expandedId === row.dataset.id ? null : row.dataset.id;
       render();
     }
   });
 
-  fabEl.addEventListener('click', function() {
-    openAddModal();
-  });
-
+  fabEl.addEventListener('click', openAddModal);
   btnCancel.addEventListener('click', closeModal);
-  overlayEl.addEventListener('click', function(e) {
-    if (e.target === overlayEl) closeModal();
-  });
+  overlayEl.addEventListener('click', function(e) { if (e.target === overlayEl) closeModal(); });
 
   btnSave.addEventListener('click', function() {
     const name = nameInput.value.trim();
@@ -871,42 +1082,40 @@
     const num = parseInt(freqNumber.value, 10);
     const unitDays = parseInt(freqUnit.value, 10);
     if (!name || !num || num < 1) return;
-
     const intervalDays = num * unitDays;
 
     if (editingId) {
       const chore = chores.find(c => c.id === editingId);
-      if (chore) {
-        chore.name = name;
-        chore.room = room;
-        chore.intervalDays = intervalDays;
-      }
+      if (chore) { chore.name = name; chore.room = room; chore.intervalDays = intervalDays; }
     } else {
-      chores.push({
-        id: generateId(),
-        name: name,
-        room: room,
-        intervalDays: intervalDays,
-        completions: [],
-        createdAt: new Date().toISOString()
-      });
+      chores.push({ id: generateId(), name, room, intervalDays, completions: [], createdAt: new Date().toISOString() });
     }
-
     saveChores(chores);
     closeModal();
     render();
   });
 
-  nameInput.addEventListener('input', function() {
-    btnSave.disabled = !nameInput.value.trim();
-  });
+  nameInput.addEventListener('input', function() { btnSave.disabled = !nameInput.value.trim(); });
 
+  // --- Actions ---
   function markDone(id) {
     const chore = chores.find(c => c.id === id);
     if (!chore) return;
     if (!chore.completions) chore.completions = [];
-    chore.completions.unshift(new Date().toISOString());
+    const timestamp = new Date().toISOString();
+    chore.completions.unshift(timestamp);
     saveChores(chores);
+
+    showToast(chore.name + ' marked done', function() {
+      // Undo: remove the completion we just added
+      const ch = chores.find(c => c.id === id);
+      if (ch && ch.completions && ch.completions[0] === timestamp) {
+        ch.completions.shift();
+        saveChores(chores);
+        render();
+      }
+    });
+
     setTimeout(render, 350);
   }
 
@@ -947,36 +1156,27 @@
     roomInput.value = chore.room || '';
     btnSave.disabled = false;
     btnSave.textContent = 'Save';
-
     const days = chore.intervalDays;
-    if (days % 30 === 0 && days >= 30) {
-      freqNumber.value = days / 30;
-      freqUnit.value = '30';
-    } else if (days % 7 === 0 && days >= 7) {
-      freqNumber.value = days / 7;
-      freqUnit.value = '7';
-    } else {
-      freqNumber.value = days;
-      freqUnit.value = '1';
-    }
-
+    if (days % 30 === 0 && days >= 30) { freqNumber.value = days / 30; freqUnit.value = '30'; }
+    else if (days % 7 === 0 && days >= 7) { freqNumber.value = days / 7; freqUnit.value = '7'; }
+    else { freqNumber.value = days; freqUnit.value = '1'; }
     overlayEl.classList.add('open');
     setTimeout(() => nameInput.focus(), 100);
   }
 
-  function closeModal() {
-    overlayEl.classList.remove('open');
-    editingId = null;
-  }
+  function closeModal() { overlayEl.classList.remove('open'); editingId = null; }
 
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && overlayEl.classList.contains('open')) {
-      closeModal();
-    }
+    if (e.key === 'Escape' && overlayEl.classList.contains('open')) closeModal();
   });
 
+  // --- Init ---
   render();
   syncFromCloud();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
 })();
 </script>
 </body>
