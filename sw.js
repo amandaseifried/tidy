@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tidy-v1';
+const CACHE_NAME = 'tidy-v2';
 const ASSETS = [
   '/tidy/',
   '/tidy/index.html',
